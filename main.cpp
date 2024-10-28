@@ -12,6 +12,35 @@
 using namespace std;
 using namespace std::chrono;
 
+// Function templates for inserting elements
+template <typename Container>
+void inserter(Container& container, const string& value) {
+    container.push_back(value);  // For vector and list
+}
+
+template <>
+void inserter(set<string>& container, const string& value) {
+    container.insert(value);  // For set
+}
+
+// Function to read data into a container
+template <typename Container>
+int read_data(Container& container, const string& filename) {
+    auto start = high_resolution_clock::now();
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Failed to open file: " << filename << endl;
+        return -1;
+    }
+    string line;
+    while (getline(file, line)) {
+        inserter(container, line);
+    }
+    file.close();
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(end - start);
+    return duration.count();
+}
 
 // Functions to sort containers
 int sort_vector(vector<string>& vec) {
@@ -57,6 +86,14 @@ int insert_set(set<string>& st, const string& value) {
     return duration.count();
 }
 
+// Functions to delete the middle-ish element
+int delete_vector(vector<string>& vec) {
+    auto start = high_resolution_clock::now();
+    vec.erase(vec.begin() + vec.size() / 2);
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(end - start);
+    return duration.count();
+}
 
 int delete_list(list<string>& lst) {
     auto start = high_resolution_clock::now();
@@ -90,7 +127,28 @@ int main() {
     vector<string> operations = {"Read", "Sort", "Insert", "Delete"};
     vector<string> data_structures = {"Vector", "List", "Set"};
 
+    // READING race
+    times["Vector"]["Read"] = read_data(vec, "codes.txt");  // Updated filename
+    times["List"]["Read"] = read_data(lst, "codes.txt");    
+    times["Set"]["Read"] = read_data(st, "codes.txt");      
 
+    // SORTING race
+    times["Vector"]["Sort"] = sort_vector(vec);
+    times["List"]["Sort"] = sort_list(lst);
+    times["Set"]["Sort"] = -1;  // Set is already sorted
+
+    // INSERTING race
+    times["Vector"]["Insert"] = insert_vector(vec, "TESTCODE");
+    times["List"]["Insert"] = insert_list(lst, "TESTCODE");
+    times["Set"]["Insert"] = insert_set(st, "TESTCODE");
+
+    // DELETING race
+    times["Vector"]["Delete"] = delete_vector(vec);
+    times["List"]["Delete"] = delete_list(lst);
+    times["Set"]["Delete"] = delete_set(st);
+
+    // Output the results
+    cout << setw(12) << "Operation";
     for (const auto& ds : data_structures) {
         cout << setw(12) << ds;
     }
